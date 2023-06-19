@@ -8,7 +8,7 @@ import config from "../common/config";
 class UsageTracker {
     totalTokens: number;
     tokensUsed: number;
-    private track(usage: CreateCompletionResponseUsage) {
+    public track(usage: CreateCompletionResponseUsage) {
         //track total amount of tokens used
         this.totalTokens += usage.total_tokens;
         //track amount of tokens used by this request
@@ -25,7 +25,7 @@ class UsageTracker {
         return this.tokensUsed;
     }
 
-};
+}
 
 class OpenAIChat {
   private apiKey: string;
