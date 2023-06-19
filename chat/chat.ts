@@ -1,30 +1,32 @@
-
-import { ChatCompletionRequestMessage, Configuration, 
-    CreateChatCompletionResponse, 
-    CreateCompletionResponseUsage, 
-    OpenAIApi } from "openai";
-import config from "../common/config";
+import {
+  ChatCompletionRequestMessage,
+  ChatCompletionResponseMessage,
+  Configuration,
+  CreateChatCompletionResponse,
+  CreateCompletionResponseUsage,
+  OpenAIApi,
+} from 'openai';
+import config from '../common/config';
 
 class UsageTracker {
-    totalTokens: number;
-    tokensUsed: number;
-    public track(usage: CreateCompletionResponseUsage) {
-        //track total amount of tokens used
-        this.totalTokens += usage.total_tokens;
-        //track amount of tokens used by this request
-        this.tokensUsed = usage.total_tokens;
-    }
+  totalTokens: number;
+  tokensUsed: number;
+  public track(usage: CreateCompletionResponseUsage) {
+    //track total amount of tokens used
+    this.totalTokens += usage.total_tokens;
+    //track amount of tokens used by this request
+    this.tokensUsed = usage.total_tokens;
+  }
 
-    //get total amount of tokens used
-    public getTotalTokens(): number {
-        return this.totalTokens;
-    }
+  //get total amount of tokens used
+  public getTotalTokens(): number {
+    return this.totalTokens;
+  }
 
-    //get amount of tokens used by this request
-    public getTokensUsed(): number {
-        return this.tokensUsed;
-    }
-
+  //get amount of tokens used by this request
+  public getTokensUsed(): number {
+    return this.tokensUsed;
+  }
 }
 
 class OpenAIChat {
@@ -36,9 +38,14 @@ class OpenAIChat {
   private maxTokens: number | undefined;
   private temperature: number | null | undefined;
   private usageTracker: UsageTracker;
+  private presencePenalty: number | null | undefined;
+  private frequencyPenalty: number | null | undefined;
 
-  constructor(model: string | undefined = undefined, apiKey: string | undefined = undefined) {
-    this.apiKey = config.apiKey ;
+  constructor(
+    model: string | undefined = undefined,
+    apiKey: string | undefined = undefined,
+  ) {
+    this.apiKey = apiKey || config.apiKey;
     this.model = model || config.model;
     this.messages = [];
     const configuration = new Configuration({ apiKey: this.apiKey });
@@ -50,34 +57,37 @@ class OpenAIChat {
     return this.usageTracker.getTotalTokens();
   }
 
-    //get amount of tokens used by this request
+  //get amount of tokens used by this request
   public getTokensUsed(): number {
     return this.usageTracker.getTokensUsed();
-    }
+  }
 
   public setSystemMessage(message: string): void {
     this.systemMessage = {
-        role: 'system',
-        content: message
+      role: 'system',
+      content: message,
     };
   }
 
-  public getMessages():  ChatCompletionRequestMessage[] {
+  public getMessages(): ChatCompletionRequestMessage[] {
     return this.messages;
   }
 
-  public speak(message: string, handler: (response: any) => void): void {
-    const userMessage : ChatCompletionRequestMessage = {
-        role: 'user',
-        content: message,
-    }
+  public speak(
+    message: string,
+    handler: (response: ChatCompletionResponseMessage) => void,
+  ): void {
+    const userMessage: ChatCompletionRequestMessage = {
+      role: 'user',
+      content: message,
+    };
     this.messages.push(userMessage);
 
     const conversation = this.buildConversation();
 
     this.sendRequest(conversation)
       .then((response) => {
-        handler(response);
+        handler(response.choices[0].message!);
       })
       .catch((error) => {
         console.error('Error:', error);
@@ -85,46 +95,56 @@ class OpenAIChat {
       });
   }
 
-    public setMaxTokens(maxTokens: number): void {
-        this.maxTokens = maxTokens;
-    }
+  public setMaxTokens(maxTokens: number): void {
+    this.maxTokens = maxTokens;
+  }
 
-    public getMaxTokens(): number | undefined {
-        return this.maxTokens;
-    }
+  public getMaxTokens(): number | undefined {
+    return this.maxTokens;
+  }
 
-    public setTemperature(temperature: number): void {
-        this.temperature = temperature;
-    }
+  public setTemperature(temperature: number): void {
+    this.temperature = temperature;
+  }
 
-    public getTemperature(): number | null | undefined {
-        return this.temperature;
-    }
+  public getTemperature(): number | null | undefined {
+    return this.temperature;
+  }
+
+  public setFrequencyPenalty(frequencyPenalty: number) {
+    this.frequencyPenalty = frequencyPenalty;
+  }
+  
+  public setPresencePenalty(presencePenalty: number) {
+    this.presencePenalty = presencePenalty;
+  }
 
   private buildConversation(): ChatCompletionRequestMessage[] {
-    const conversation = [
-      ...this.messages,
-    this.systemMessage,
-    ];
+    const conversation = [...this.messages, this.systemMessage];
     return conversation;
   }
 
-  private async sendRequest(conversation: ChatCompletionRequestMessage[]): Promise<CreateChatCompletionResponse> {
+  private async sendRequest(
+    conversation: ChatCompletionRequestMessage[],
+  ): Promise<CreateChatCompletionResponse> {
     const resp = await this.openai.createChatCompletion({
-        model: this.model,
-        messages: conversation,
-        temperature: this.temperature,
-        max_tokens: this.maxTokens,
-        top_p: 1,
-        presence_penalty: 1,
-        frequency_penalty: 1,
-        stop: ['\n', ' Human:', ' AI:']
-    })
+      model: this.model,
+      messages: conversation,
+      temperature: this.temperature,
+      max_tokens: this.maxTokens,
+      top_p: 1,
+      presence_penalty: this.presencePenalty,
+      frequency_penalty: this.frequencyPenalty,
+      stop: ['\n', ' Human:', ' AI:'],
+    });
     this.usageTracker.track(resp.data.usage!);
     return resp.data;
   }
 
-  private handleRetry(userMessage: ChatCompletionRequestMessage, handler: (response: any) => void): void {
+  private handleRetry(
+    userMessage: ChatCompletionRequestMessage,
+    handler: (response: ChatCompletionResponseMessage) => void,
+  ): void {
     const retries = 3;
     let retryCount = 0;
     let delay = 1000;
@@ -133,7 +153,7 @@ class OpenAIChat {
       setTimeout(() => {
         this.sendRequest(this.buildConversation())
           .then((response) => {
-            handler(response);
+            handler(response.choices[0].message!);
           })
           .catch((error) => {
             console.error('Error:', error);
@@ -152,11 +172,22 @@ class OpenAIChat {
     retry();
   }
 
-  private handleRetryError(userMessage: ChatCompletionRequestMessage, handler: (response: any) => void, error: Error): void {
+  private handleRetryError(
+    userMessage: ChatCompletionRequestMessage,
+    handler: (response: ChatCompletionResponseMessage) => void,
+    error: Error,
+  ): void {
     this.messages.pop();
-    const errorMessage = `Error occurred when processing your last action: ${JSON.stringify(error)}`;
-    const errorMessageObject : ChatCompletionRequestMessage = { role: 'user', content: errorMessage };
+    const errorMessage = `Error occurred when processing your last action: ${JSON.stringify(
+      error,
+    )}`;
+    const errorMessageObject: ChatCompletionResponseMessage = {
+      role: 'user',
+      content: errorMessage,
+    };
     this.messages.push(errorMessageObject);
     handler(errorMessageObject);
   }
 }
+
+export { OpenAIChat, UsageTracker };
