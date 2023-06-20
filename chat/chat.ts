@@ -1,8 +1,11 @@
 import {
   ChatCompletionRequestMessage,
+  ChatCompletionRequestMessageFunctionCall,
+  ChatCompletionRequestMessageRoleEnum,
   ChatCompletionResponseMessage,
   Configuration,
   CreateChatCompletionResponse,
+  CreateChatCompletionResponseChoicesInner,
   CreateCompletionResponseUsage,
   OpenAIApi,
 } from 'openai';
@@ -11,6 +14,12 @@ import config from '../common/config';
 class UsageTracker {
   totalTokens: number;
   tokensUsed: number;
+
+  constructor() {
+    this.totalTokens = 0;
+    this.tokensUsed = 0;
+  }
+
   public track(usage: CreateCompletionResponseUsage) {
     //track total amount of tokens used
     this.totalTokens += usage.total_tokens;
@@ -33,13 +42,15 @@ class OpenAIChat {
   private apiKey: string;
   private model: string;
   private messages: ChatCompletionRequestMessage[];
-  private systemMessage: ChatCompletionRequestMessage;
+  private systemMessage: ChatCompletionRequestMessage | undefined;
   private openai: OpenAIApi;
   private maxTokens: number | undefined;
   private temperature: number | null | undefined;
   private usageTracker: UsageTracker;
   private presencePenalty: number | null | undefined;
   private frequencyPenalty: number | null | undefined;
+  private _notFinished: boolean;
+  isFinished: (message: ChatCompletionResponseMessage) => boolean | undefined = () => false;
 
   constructor(
     model: string | undefined = undefined,
@@ -50,11 +61,21 @@ class OpenAIChat {
     this.messages = [];
     const configuration = new Configuration({ apiKey: this.apiKey });
     this.openai = new OpenAIApi(configuration);
+    this.usageTracker = new UsageTracker();
+    this._notFinished = true;
+  }
+
+  setIsFinished(isFinished: (message: ChatCompletionResponseMessage) => boolean | undefined) {
+    this.isFinished = isFinished;
   }
 
   //get total amount of tokens used
   public getTotalTokens(): number {
     return this.usageTracker.getTotalTokens();
+  }
+
+  public notFinished(): boolean {
+    return this._notFinished;
   }
 
   //get amount of tokens used by this request
@@ -73,26 +94,58 @@ class OpenAIChat {
     return this.messages;
   }
 
-  public speak(
+  public async executeFunction(
+    functionCall: ChatCompletionRequestMessageFunctionCall,
+  ): Promise<ChatCompletionRequestMessage> {
+    return {
+      role: 'function',
+      content: 'TO: add response for:' + functionCall.name,
+    };
+  }
+
+  public async addSelfMessage(message: ChatCompletionResponseMessage) {
+    if (!message.content) {
+      const executionResult: ChatCompletionRequestMessage =
+        await this.executeFunction(message.function_call!);
+      this.messages.push(executionResult);
+    } else {
+      if (message.role === 'assistant') {
+        this.messages.push({
+          role: 'assistant',
+          content: message.content,
+        });
+      }
+    }
+  }
+
+  public async hears(
     message: string,
     handler: (response: ChatCompletionResponseMessage) => void,
-  ): void {
+  ): Promise<void> {
     const userMessage: ChatCompletionRequestMessage = {
       role: 'user',
       content: message,
     };
     this.messages.push(userMessage);
 
-    const conversation = this.buildConversation();
-
-    this.sendRequest(conversation)
-      .then((response) => {
-        handler(response.choices[0].message!);
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-        this.handleRetry(userMessage, handler);
+    try {
+      let result: CreateChatCompletionResponse;
+      do {
+        const conversation = this.buildConversation();
+        result = await this.sendRequest(conversation);
+        if(this.isFinished && this.isFinished(result.choices[0].message!)) {
+          this._notFinished = false;
+        }
+        await this.addSelfMessage(result.choices[0].message!);
+      } while (result.choices[0].message?.role !== 'assistant');
+      handler({
+        content: result.choices[0].message?.content,
+        role: 'assistant',
       });
+    } catch (error: any) {
+      console.error('Error:', error);
+      this.handleRetry(userMessage, handler);
+    }
   }
 
   public setMaxTokens(maxTokens: number): void {
@@ -114,19 +167,21 @@ class OpenAIChat {
   public setFrequencyPenalty(frequencyPenalty: number) {
     this.frequencyPenalty = frequencyPenalty;
   }
-  
+
   public setPresencePenalty(presencePenalty: number) {
     this.presencePenalty = presencePenalty;
   }
 
   private buildConversation(): ChatCompletionRequestMessage[] {
-    const conversation = [...this.messages, this.systemMessage];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const conversation = [this.systemMessage!, ...this.messages];
     return conversation;
   }
 
   private async sendRequest(
     conversation: ChatCompletionRequestMessage[],
   ): Promise<CreateChatCompletionResponse> {
+    console.log('Request:', conversation);
     const resp = await this.openai.createChatCompletion({
       model: this.model,
       messages: conversation,
@@ -135,7 +190,7 @@ class OpenAIChat {
       top_p: 1,
       presence_penalty: this.presencePenalty,
       frequency_penalty: this.frequencyPenalty,
-      stop: ['\n', ' Human:', ' AI:'],
+      stream: false,
     });
     this.usageTracker.track(resp.data.usage!);
     return resp.data;
@@ -153,7 +208,10 @@ class OpenAIChat {
       setTimeout(() => {
         this.sendRequest(this.buildConversation())
           .then((response) => {
-            handler(response.choices[0].message!);
+            const resp = asAssistantMessage(response);
+            //TODO: handle function calls
+            handler(resp);
+            this.messages.push(resp);
           })
           .catch((error) => {
             console.error('Error:', error);
@@ -191,3 +249,11 @@ class OpenAIChat {
 }
 
 export { OpenAIChat, UsageTracker };
+function asAssistantMessage(
+  response: CreateChatCompletionResponse,
+): ChatCompletionRequestMessage {
+  return {
+    content: response.choices[0].message?.content,
+    role: 'assistant',
+  };
+}
