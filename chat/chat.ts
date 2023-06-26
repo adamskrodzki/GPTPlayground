@@ -1,11 +1,9 @@
 import {
   ChatCompletionRequestMessage,
   ChatCompletionRequestMessageFunctionCall,
-  ChatCompletionRequestMessageRoleEnum,
   ChatCompletionResponseMessage,
   Configuration,
   CreateChatCompletionResponse,
-  CreateChatCompletionResponseChoicesInner,
   CreateCompletionResponseUsage,
   OpenAIApi,
 } from 'openai';
@@ -191,6 +189,7 @@ class OpenAIChat {
       presence_penalty: this.presencePenalty,
       frequency_penalty: this.frequencyPenalty,
       stream: false,
+      functions:[]
     });
     this.usageTracker.track(resp.data.usage!);
     return resp.data;
