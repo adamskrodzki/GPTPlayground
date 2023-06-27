@@ -1,30 +1,64 @@
-import { ChatCompletionFunctionBase, ChatCompletionFunctionExecutionResult, ChatCompletionFunctionParameterDescriptor } from "../base-function";
+import { ChatCompletionFunctionBase, ChatCompletionFunctionExecutionResult } from "../base-function";
 
 
 type FetchWeatherFunction = (location: string, unit: string) => Promise<{ temperature: number, description: string }>;
 
-class WeatherFunction extends ChatCompletionFunctionBase {
+enum WeatherUnit {
+    Celsius = 'celsius',
+    Fahrenheit = 'fahrenheit'
+}
+
+type WeatherFunctionParameters = {
+    location: string;
+    unit?: WeatherUnit;
+    addDescriptionOfProperty: (name: string) => string
+    excludeFromRequired: () => string[];
+}
+
+type WeatherFunctionResult = {
+    temperature: number;
+    unit: WeatherUnit;
+    description: string;
+}
+
+class WeatherFunction extends ChatCompletionFunctionBase<WeatherFunctionParameters, WeatherFunctionResult> {
     public name = 'get_current_weather';
     public description = 'Get the current weather in a given location';
 
-    public location : ChatCompletionFunctionParameterDescriptor = {
-        description: 'The city and state, e.g. San Francisco, CA',
-        type: "string",
-        required: true
-    };
-
-    public unit : ChatCompletionFunctionParameterDescriptor = {
-        description: 'The unit of temperature',
-        type: 'string',
-        enum: ['celsius', 'fahrenheit'],
-        required: false
-    };
+    public exampleInput = {
+        location : 'San Francisco, CA',
+        unit: WeatherUnit.Celsius,
+        addEnumForProperty: (name: string) => {
+            switch(name) {  
+                case 'unit': {
+                    return Object.values(WeatherUnit);
+                }
+                default: {
+                    return undefined
+                }
+            }
+        },
+        excludeFromRequired: () => ['unit'],
+        addDescriptionOfProperty: (name: string) => {
+            switch(name) {  
+                case 'location': {
+                    return 'The city and state, e.g. San Francisco, CA';
+                }
+                case 'unit': {
+                    return 'The unit of temperature, enum of celsius or fahrenheit';
+                }
+                default: {
+                    return '';
+                }
+            }
+        },
+    }
 
     constructor(private _fetchWeatherFunction: FetchWeatherFunction) {
         super();
     }
 
-    async execute(parameters: Record<string, any>) : Promise<ChatCompletionFunctionExecutionResult>{
+    async execute(parameters: Record<string, any>) : Promise<ChatCompletionFunctionExecutionResult<WeatherFunctionResult>>{
         const location = parameters['location'];
         const unit = parameters['unit'] || 'celsius'; // set default unit as celsius
 
@@ -49,4 +83,4 @@ class WeatherFunction extends ChatCompletionFunctionBase {
 
 const weatherFunctionInstance = new WeatherFunction((location: string, unit: string) => Promise.resolve({ temperature: 20, description: 'Sunny' }));
 
-export { weatherFunctionInstance, WeatherFunction, FetchWeatherFunction }
+export { weatherFunctionInstance, WeatherFunction, FetchWeatherFunction, WeatherUnit }

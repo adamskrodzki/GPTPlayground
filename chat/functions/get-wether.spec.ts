@@ -28,7 +28,7 @@ import { WeatherFunction } from './get-wether';
               },
               unit: {
                 type: "string",
-                description: "The unit of temperature",
+                description: "The unit of temperature, enum of celsius or fahrenheit",
                 enum: ["celsius", "fahrenheit"]
               }
             },
