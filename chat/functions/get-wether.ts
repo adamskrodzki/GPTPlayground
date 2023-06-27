@@ -1,4 +1,4 @@
-import { ChatCompletionFunctionBase, ChatCompletionFunctionParameterDescriptor } from "../base-function";
+import { ChatCompletionFunctionBase, ChatCompletionFunctionExecutionResult, ChatCompletionFunctionParameterDescriptor } from "../base-function";
 
 
 type FetchWeatherFunction = (location: string, unit: string) => Promise<{ temperature: number, description: string }>;
@@ -24,7 +24,7 @@ class WeatherFunction extends ChatCompletionFunctionBase {
         super();
     }
 
-    async execute(parameters: Record<string, any>) {
+    async execute(parameters: Record<string, any>) : Promise<ChatCompletionFunctionExecutionResult>{
         const location = parameters['location'];
         const unit = parameters['unit'] || 'celsius'; // set default unit as celsius
 
@@ -32,9 +32,13 @@ class WeatherFunction extends ChatCompletionFunctionBase {
         const weather = await this._fetchWeather(location, unit);
 
         return {
-            temperature: weather.temperature,
-            unit: unit,
-            description: weather.description,
+            role: 'function',
+            name: this.name,
+            content: {
+                temperature: weather.temperature,
+                unit: unit,
+                description: weather.description
+            }
         };
     }
 

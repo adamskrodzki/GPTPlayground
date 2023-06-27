@@ -17,12 +17,18 @@ type ChatCompletionFunction = {
       required?: string[];
     }
   };
+
+type ChatCompletionFunctionExecutionResult = {
+    role: "function";
+    name: string;
+    content: Record<string, any>;
+};
   
 abstract class ChatCompletionFunctionBase {
     public abstract name: string;
     public abstract description: string;
   
-    public abstract execute(parameters: Record<string, any>): any;
+    public abstract execute(parameters: Record<string, any>): Promise<ChatCompletionFunctionExecutionResult>;
   
     public toChatCompletionFunction(): ChatCompletionFunction {
       const parameters = this.getParameters(); 
@@ -65,4 +71,4 @@ abstract class ChatCompletionFunctionBase {
     }
   }
 
-export { ChatCompletionFunctionBase, ChatCompletionFunction, ChatCompletionFunctionParameterDescriptor };
+export { ChatCompletionFunctionBase, ChatCompletionFunction, ChatCompletionFunctionParameterDescriptor, ChatCompletionFunctionExecutionResult };
