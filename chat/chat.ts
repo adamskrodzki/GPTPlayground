@@ -111,7 +111,7 @@ class OpenAIChat {
   public updateSupportedFunctions(functions: IChatCompletionFunction[]): void {
     this.functions = functions;
   }
-
+  
   public async executeFunction(
     functionCall: ChatCompletionRequestMessageFunctionCall,
   ): Promise<ChatCompletionRequestMessage> {
@@ -134,6 +134,10 @@ class OpenAIChat {
       const executionResult: ChatCompletionRequestMessage =
         await this.executeFunction(message.function_call);
       this.messages.push(executionResult);
+      
+      if(this.isFinished && this.isFinished(executionResult)) {
+        this._notFinished = false;
+      }
     } else {
       if(message.content){
         if (message.role === 'assistant') {
@@ -168,7 +172,8 @@ class OpenAIChat {
           this._notFinished = false;
         }
         await this.addSelfMessage(result.choices[0].message!);
-      } while (result.choices[0].message?.role !== 'assistant' || !result.choices[0].message?.content);
+        
+      } while ((result.choices[0].message?.role !== 'assistant' || !result.choices[0].message?.content) && this._notFinished);
       handler({
         content: result.choices[0].message?.content,
         role: 'assistant',
@@ -231,6 +236,10 @@ class OpenAIChat {
       console.log("Response", JSON.stringify(resp.data));
     }
     return resp.data;
+  }
+
+  public isDebug(): boolean {
+    return this._debug;
   }
 
   private handleRetry(

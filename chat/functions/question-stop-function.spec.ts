@@ -1,24 +1,24 @@
 import 'jest';
-import { StopFunction } from './stop-function';
+import { QuestionStopFunction, questionStopFunctionDescription } from './question-stop-function';
   
   describe('StopFunction', () => {
-    let stopFunction: StopFunction;
+    let stopFunction: QuestionStopFunction;
   
     beforeEach(() => {
-      stopFunction = new StopFunction();
+      stopFunction = new QuestionStopFunction();
     });
   
     test('should have correct name and description', () => {
-      expect(stopFunction.name).toBe('stop_function');
-      expect(stopFunction.description).toBe('Allows AI agent to indicate that he is done with the conversation. If function works correctly, it should respond with "Conversation ended"');
+      expect(stopFunction.name).toBe('question_stop_function');
+      expect(stopFunction.description).toBe(questionStopFunctionDescription);
     });
   
     test('should have correct parameters', () => {
       const descriptor = stopFunction.toChatCompletionFunction();
   
       expect(descriptor).toEqual({
-        name: 'stop_function',
-        description: 'Allows AI agent to indicate that he is done with the conversation. If function works correctly, it should respond with "Conversation ended"',
+        name: 'question_stop_function',
+        description: questionStopFunctionDescription,
         parameters: {
             type: "object",
             properties: {
@@ -37,7 +37,7 @@ import { StopFunction } from './stop-function';
       
       expect(weather).toEqual({
         role: 'function',
-        name: 'stop_function',
+        name: 'question_stop_function',
         content: {
             confirmation: "Conversation ended"
         }});
