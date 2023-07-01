@@ -38,7 +38,7 @@ import { WeatherFunction } from './get-wether';
     });
   
     test('execute should return correct weather', async () => {
-      const weather = await weatherFunction.execute({ location: 'San Francisco, CA', unit: 'celsius' });
+      const weather = await weatherFunction.execute(JSON.stringify({ location: 'San Francisco, CA', unit: 'celsius' }));
       
       expect(weather).toEqual({
         role: 'function',
@@ -51,7 +51,7 @@ import { WeatherFunction } from './get-wether';
     });
   
     test('execute should use celsius as default unit', async () => {
-      const weather = await weatherFunction.execute({ location: 'San Francisco, CA' });
+      const weather = await weatherFunction.execute(JSON.stringify({ location: 'San Francisco, CA' }));
       
       expect(weather.content.unit).toBe('celsius');
     });

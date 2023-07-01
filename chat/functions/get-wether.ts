@@ -11,7 +11,8 @@ enum WeatherUnit {
 type WeatherFunctionParameters = {
     location: string;
     unit?: WeatherUnit;
-    addDescriptionOfProperty: (name: string) => string
+    addEnumForProperty: (name: string) => string[] | undefined;
+    addDescriptionOfProperty: (name: string) => string | undefined;
     excludeFromRequired: () => string[];
 }
 
@@ -28,7 +29,7 @@ class WeatherFunction extends ChatCompletionFunctionBase<WeatherFunctionParamete
     public exampleInput = {
         location : 'San Francisco, CA',
         unit: WeatherUnit.Celsius,
-        addEnumForProperty: (name: string) => {
+        addEnumForProperty: (name: string) : string[] | undefined => {
             switch(name) {  
                 case 'unit': {
                     return Object.values(WeatherUnit);
@@ -48,7 +49,7 @@ class WeatherFunction extends ChatCompletionFunctionBase<WeatherFunctionParamete
                     return 'The unit of temperature, enum of celsius or fahrenheit';
                 }
                 default: {
-                    return '';
+                    return undefined;
                 }
             }
         },
@@ -58,9 +59,9 @@ class WeatherFunction extends ChatCompletionFunctionBase<WeatherFunctionParamete
         super();
     }
 
-    async execute(parameters: Record<string, any>) : Promise<ChatCompletionFunctionExecutionResult<WeatherFunctionResult>>{
+    async executeImplementation(parameters: WeatherFunctionParameters) : Promise<ChatCompletionFunctionExecutionResult<WeatherFunctionResult>>{
         const location = parameters['location'];
-        const unit = parameters['unit'] || 'celsius'; // set default unit as celsius
+        const unit = parameters['unit'] || WeatherUnit.Celsius; // set default unit as celsius
 
         // Assuming we have a weather API service to fetch weather
         const weather = await this._fetchWeather(location, unit);
@@ -70,8 +71,8 @@ class WeatherFunction extends ChatCompletionFunctionBase<WeatherFunctionParamete
             name: this.name,
             content: {
                 temperature: weather.temperature,
-                unit: unit,
-                description: weather.description
+                description: weather.description,
+                unit: unit as WeatherUnit
             }
         };
     }
@@ -81,6 +82,6 @@ class WeatherFunction extends ChatCompletionFunctionBase<WeatherFunctionParamete
     }
 }
 
-const weatherFunctionInstance = new WeatherFunction((location: string, unit: string) => Promise.resolve({ temperature: 20, description: 'Sunny' }));
+const weatherFunctionInstanceMock = new WeatherFunction((location: string, unit: string) => Promise.resolve({ temperature: 20, description: 'Sunny' }));
 
-export { weatherFunctionInstance, WeatherFunction, FetchWeatherFunction, WeatherUnit }
+export { weatherFunctionInstanceMock, WeatherFunction, FetchWeatherFunction, WeatherUnit }

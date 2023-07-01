@@ -11,13 +11,29 @@ type ChatCompletionFunctionExecutionResult<T> = {
     name: string;
     content: T;
 };
+
+interface IChatCompletionFunction {
+    name: string;
+    description: string;
+    execute(input: string): Promise<ChatCompletionFunctionExecutionResult<any>>;
+    toChatCompletionFunction(): ChatCompletionFunction;
+}
   
-abstract class ChatCompletionFunctionBase<Input, Result> {
+abstract class ChatCompletionFunctionBase<Input, Result> implements IChatCompletionFunction {
     public abstract name: string;
     public abstract description: string;
     public abstract exampleInput: Input;
+
+    protected abstract executeImplementation(parameters: Input): Promise<ChatCompletionFunctionExecutionResult<Result>>;
+
+    public beforeExecute : (parameters: Input) => Promise<Input> = async (parameters: Input) => { return parameters; };
+    public afterExecute : (result: ChatCompletionFunctionExecutionResult<Result>) => Promise<ChatCompletionFunctionExecutionResult<Result>> = async (result: ChatCompletionFunctionExecutionResult<Result>) => { return result; };
   
-    public abstract execute(parameters: Input): Promise<ChatCompletionFunctionExecutionResult<Result>>;
+
+    public async execute(input : string) : Promise<ChatCompletionFunctionExecutionResult<any>> {
+      const parameters = JSON.parse(input) as Input;
+      return this.afterExecute( await this.executeImplementation(await this.beforeExecute(parameters)));
+    }
   
     public toChatCompletionFunction(): ChatCompletionFunction {
       createSchema(this.exampleInput);
@@ -30,4 +46,4 @@ abstract class ChatCompletionFunctionBase<Input, Result> {
   
   }
 
-export { ChatCompletionFunctionBase, ChatCompletionFunction, ChatCompletionFunctionExecutionResult };
+export { ChatCompletionFunctionBase, ChatCompletionFunction, ChatCompletionFunctionExecutionResult, IChatCompletionFunction };

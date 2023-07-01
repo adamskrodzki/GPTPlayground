@@ -8,6 +8,7 @@ import {
   OpenAIApi,
 } from 'openai';
 import config from '../common/config';
+import { IChatCompletionFunction } from './base-function';
 
 class UsageTracker {
   totalTokens: number;
@@ -48,6 +49,8 @@ class OpenAIChat {
   private presencePenalty: number | null | undefined;
   private frequencyPenalty: number | null | undefined;
   private _notFinished: boolean;
+  private _debug: boolean;
+  private functions : IChatCompletionFunction[] = [];
   isFinished: (message: ChatCompletionResponseMessage) => boolean | undefined = () => false;
 
   constructor(
@@ -61,6 +64,11 @@ class OpenAIChat {
     this.openai = new OpenAIApi(configuration);
     this.usageTracker = new UsageTracker();
     this._notFinished = true;
+    this._debug = false;
+  }
+
+  public setDebug(debug: boolean): void {
+    this._debug = debug;
   }
 
   setIsFinished(isFinished: (message: ChatCompletionResponseMessage) => boolean | undefined) {
@@ -92,33 +100,58 @@ class OpenAIChat {
     return this.messages;
   }
 
+  public getSupportedFunctions(): IChatCompletionFunction[] {
+    return this.functions;
+  }
+
+  public addSupportedFunction(functionToAdd: IChatCompletionFunction): void {
+    this.functions.push(functionToAdd);
+  }
+
+  public updateSupportedFunctions(functions: IChatCompletionFunction[]): void {
+    this.functions = functions;
+  }
+
   public async executeFunction(
     functionCall: ChatCompletionRequestMessageFunctionCall,
   ): Promise<ChatCompletionRequestMessage> {
-    return {
-      role: 'function',
-      content: 'TO: add response for:' + functionCall.name,
-    };
+    const functionToExecute = this.functions.find(x=>x.name === functionCall.name);
+    if (functionToExecute) {
+      const result = await functionToExecute.execute(functionCall.arguments!);
+      return {
+        role: 'function',
+        name: functionCall.name,
+        content: JSON.stringify(result),
+      };
+    }else{
+      throw new Error(`Function ${functionCall.name} not supported`);
+    }
   }
 
   public async addSelfMessage(message: ChatCompletionResponseMessage) {
-    if (!message.content) {
+    if (message.function_call) {
+      this.messages.push(message);
       const executionResult: ChatCompletionRequestMessage =
-        await this.executeFunction(message.function_call!);
+        await this.executeFunction(message.function_call);
       this.messages.push(executionResult);
     } else {
-      if (message.role === 'assistant') {
-        this.messages.push({
-          role: 'assistant',
-          content: message.content,
-        });
+      if(message.content){
+        if (message.role === 'assistant') {
+          this.messages.push({
+            role: 'assistant',
+            content: message.content,
+          });
+        }
+      }else{
+        throw new Error('Message content or function call must be provided');
       }
     }
   }
 
   public async hears(
     message: string,
-    handler: (response: ChatCompletionResponseMessage) => void,
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    handler: (response: ChatCompletionResponseMessage) => void = () => {},
   ): Promise<void> {
     const userMessage: ChatCompletionRequestMessage = {
       role: 'user',
@@ -135,7 +168,7 @@ class OpenAIChat {
           this._notFinished = false;
         }
         await this.addSelfMessage(result.choices[0].message!);
-      } while (result.choices[0].message?.role !== 'assistant');
+      } while (result.choices[0].message?.role !== 'assistant' || !result.choices[0].message?.content);
       handler({
         content: result.choices[0].message?.content,
         role: 'assistant',
@@ -179,8 +212,9 @@ class OpenAIChat {
   private async sendRequest(
     conversation: ChatCompletionRequestMessage[],
   ): Promise<CreateChatCompletionResponse> {
-    console.log('Request:', conversation);
-    const resp = await this.openai.createChatCompletion({
+    const functionDefinitions = this.functions.map((f) => f.toChatCompletionFunction());
+    
+    const basicData = {
       model: this.model,
       messages: conversation,
       temperature: this.temperature,
@@ -189,9 +223,13 @@ class OpenAIChat {
       presence_penalty: this.presencePenalty,
       frequency_penalty: this.frequencyPenalty,
       stream: false,
-      functions:[]
-    });
+    }
+    const resp = await this.openai.createChatCompletion( functionDefinitions.length>0? { ...basicData, ...{functions: functionDefinitions, function_call: "auto"}} : basicData);
     this.usageTracker.track(resp.data.usage!);
+    if(this._debug){
+      console.log("Request", JSON.stringify(conversation));
+      console.log("Response", JSON.stringify(resp.data));
+    }
     return resp.data;
   }
 
