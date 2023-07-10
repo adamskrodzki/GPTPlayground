@@ -104,3 +104,6 @@ public
 
 # vscode settings
 .vscode/
+
+# project workspaces
+chat/chains/workspaces/
