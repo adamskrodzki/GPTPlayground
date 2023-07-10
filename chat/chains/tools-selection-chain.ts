@@ -3,12 +3,14 @@ import { OpenAIChat } from '../chat';
 import functionsFactory from '../functions-factory';
 import { requiredToolsFunctionInstance } from '../functions/required-tools';
 
-
-async function toolSelectorChain(question : string, systemPrompt : string, debug = false) : Promise<{
+async function toolSelectorChain(
+  question: string,
+  systemPrompt: string,
+  debug = false,
+): Promise<{
   response: string[];
   totalUsed: number;
 }> {
-
   return new Promise<{
     response: string[];
     totalUsed: number;
@@ -30,7 +32,7 @@ async function toolSelectorChain(question : string, systemPrompt : string, debug
       OTHER AI SYSTEM PROMPT:\r\n 
       ${systemPrompt}\r\n\r\n
       AVAILABLE TOOLS:\r\n
-      ${tools}`
+      ${tools}`,
     );
 
     // Set temperature, max tokens, and penalties for both agents
@@ -51,14 +53,16 @@ async function toolSelectorChain(question : string, systemPrompt : string, debug
       return isFinished === true;
     });
 
-    async function aiResponseHandler(response: ChatCompletionResponseMessage): Promise<void> {
-      if(response.content && chat.isDebug()){
+    async function aiResponseHandler(
+      response: ChatCompletionResponseMessage,
+    ): Promise<void> {
+      if (response.content && chat.isDebug()) {
         console.log('AI:', response.content);
       }
       //console.warn('RAW MESSAGE:', response);
-      while(chat.notFinished()){
-        await chat.hears("Continue", (nextMessage) => {
-          if(nextMessage.content && chat.isDebug()){
+      while (chat.notFinished()) {
+        await chat.hears('Continue', (nextMessage) => {
+          if (nextMessage.content && chat.isDebug()) {
             console.log('AI:', nextMessage.content);
           }
         });
@@ -66,12 +70,15 @@ async function toolSelectorChain(question : string, systemPrompt : string, debug
     }
 
     chat.setDebug(debug);
-    chat.hears(`Please select tools, most suitable to fullfill following reqest/question/task:${question}`, aiResponseHandler).catch((err) => {
-      reject(err); 
-    });
-
+    chat
+      .hears(
+        `Please select tools, most suitable to fullfill following reqest/question/task:${question}`,
+        aiResponseHandler,
+      )
+      .catch((err) => {
+        reject(err);
+      });
   });
-
 }
 
 export default toolSelectorChain;

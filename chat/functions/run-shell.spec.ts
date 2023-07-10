@@ -8,52 +8,85 @@ import { ChatCompletionFunctionExecutionResult } from '../base-function';
 const runShellFunction = new RunShellFunction();
 
 describe('RunShellFunction', () => {
-    test('should have correct name and description', () => {
-        expect(runShellFunction.name).toBe('run_shell');
-        expect(runShellFunction.description).toBe('Allows AI agent to run Linux shell commands. If function works correctly, it returns exactly what the shell command outputs to stdout if shell command is executed correctly. If shell command is not executed correctly, it returns tesx starting with Error: and then the error message');
+  test('should have correct name and description', () => {
+    expect(runShellFunction.name).toBe('run_shell');
+    expect(runShellFunction.description).toBe(
+      'Allows AI agent to run Linux shell commands. If function works correctly, it returns exactly what the shell command outputs to stdout if shell command is executed correctly. If shell command is not executed correctly, it returns tesx starting with Error: and then the error message',
+    );
+  });
+
+  test('should have correct parameters', () => {
+    const descriptor = runShellFunction.toChatCompletionFunction();
+
+    expect(descriptor).toEqual({
+      name: 'run_shell',
+      description:
+        'Allows AI agent to run Linux shell commands. If function works correctly, it returns exactly what the shell command outputs to stdout if shell command is executed correctly. If shell command is not executed correctly, it returns tesx starting with Error: and then the error message',
+      parameters: {
+        type: 'object',
+        properties: {
+          command: {
+            type: 'string',
+            description: 'shell command to be executed',
+          },
+        },
+        required: ['command'],
+      },
     });
+  });
 
-    test('should have correct parameters', () => {
-        const descriptor = runShellFunction.toChatCompletionFunction();
+  test('execing echo works', async () => {
+    const result = await runShellFunction.execute(
+      JSON.stringify({ command: 'echo "hello world"' }),
+    );
 
-        expect(descriptor).toEqual({
-            name: 'run_shell',
-            description: 'Allows AI agent to run Linux shell commands. If function works correctly, it returns exactly what the shell command outputs to stdout if shell command is executed correctly. If shell command is not executed correctly, it returns tesx starting with Error: and then the error message',
-            parameters: {
-                type: "object",
-                properties: {
-                    command: {
-                        type: "string",
-                        description: "shell command to be executed"
-                    }
-                },
-                required: ["command"]
-            }
-        });
+    expect(result).toEqual({
+      role: 'function',
+      name: 'run_shell',
+      content: {
+        output: 'hello world\n',
+        isError: false,
+      },
     });
+  });
 
-    test('execing echo works', async () => {
-        const result = await runShellFunction.execute(JSON.stringify({ command: 'echo "hello world"' }));
+  test('executing ps works"', async () => {
+    const result = await runShellFunction.execute(
+      JSON.stringify({ command: 'ps' }),
+    );
 
-        expect(result).toEqual({
-            role: 'function',
-            name: 'run_shell',
-            content: {
-                output: "hello world\n",
-                isError: false
-            }});
-    });
+    expect(
+      (
+        result as ChatCompletionFunctionExecutionResult<RunShellFunctionResult>
+      ).content.output.startsWith('  PID TTY'),
+    ).toBe(true);
+  });
 
-    test('executing ps works"', async () => {
-        const result = await runShellFunction.execute(JSON.stringify({ command: 'ps' }));
+  test('execution identifies errors correctly"', async () => {
+    const result = await runShellFunction.execute(
+      JSON.stringify({ command: 'cd fsfjfs' }),
+    );
 
-        expect((result as ChatCompletionFunctionExecutionResult<RunShellFunctionResult>).content.output.startsWith("  PID TTY")).toBe(true);
-    });
+    expect(
+      (result as ChatCompletionFunctionExecutionResult<RunShellFunctionResult>)
+        .content.isError,
+    ).toBe(true);
+    expect(
+      (
+        result as ChatCompletionFunctionExecutionResult<RunShellFunctionResult>
+      ).content.output.startsWith('Error: Command failed: cd fsfjfs'),
+    ).toBe(true);
+  });
 
-    test('executing git works"', async () => {
-        const result = await runShellFunction.execute(JSON.stringify({ command: 'git status' }));
+  test('executing git works"', async () => {
+    const result = await runShellFunction.execute(
+      JSON.stringify({ command: 'git status' }),
+    );
 
-        expect((result as ChatCompletionFunctionExecutionResult<RunShellFunctionResult>).content.output.startsWith("On branch main")).toBe(true);
-    });
-
+    expect(
+      (
+        result as ChatCompletionFunctionExecutionResult<RunShellFunctionResult>
+      ).content.output.startsWith('On branch main'),
+    ).toBe(true);
+  });
 });

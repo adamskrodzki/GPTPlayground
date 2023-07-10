@@ -50,8 +50,9 @@ class OpenAIChat {
   private frequencyPenalty: number | null | undefined;
   private _notFinished: boolean;
   private _debug: boolean;
-  private functions : IChatCompletionFunction[] = [];
-  isFinished: (message: ChatCompletionResponseMessage) => boolean | undefined = () => false;
+  private functions: IChatCompletionFunction[] = [];
+  isFinished: (message: ChatCompletionResponseMessage) => boolean | undefined =
+    () => false;
 
   constructor(
     model: string | undefined = undefined,
@@ -71,7 +72,9 @@ class OpenAIChat {
     this._debug = debug;
   }
 
-  setIsFinished(isFinished: (message: ChatCompletionResponseMessage) => boolean | undefined) {
+  setIsFinished(
+    isFinished: (message: ChatCompletionResponseMessage) => boolean | undefined,
+  ) {
     this.isFinished = isFinished;
   }
 
@@ -111,11 +114,13 @@ class OpenAIChat {
   public updateSupportedFunctions(functions: IChatCompletionFunction[]): void {
     this.functions = functions;
   }
-  
+
   public async executeFunction(
     functionCall: ChatCompletionRequestMessageFunctionCall,
   ): Promise<ChatCompletionRequestMessage> {
-    const functionToExecute = this.functions.find(x=>x.name === functionCall.name);
+    const functionToExecute = this.functions.find(
+      (x) => x.name === functionCall.name,
+    );
     if (functionToExecute) {
       const result = await functionToExecute.execute(functionCall.arguments!);
       return {
@@ -123,7 +128,7 @@ class OpenAIChat {
         name: functionCall.name,
         content: JSON.stringify(result),
       };
-    }else{
+    } else {
       throw new Error(`Function ${functionCall.name} not supported`);
     }
   }
@@ -134,19 +139,19 @@ class OpenAIChat {
       const executionResult: ChatCompletionRequestMessage =
         await this.executeFunction(message.function_call);
       this.messages.push(executionResult);
-      
-      if(this.isFinished && this.isFinished(executionResult)) {
+
+      if (this.isFinished && this.isFinished(executionResult)) {
         this._notFinished = false;
       }
     } else {
-      if(message.content){
+      if (message.content) {
         if (message.role === 'assistant') {
           this.messages.push({
             role: 'assistant',
             content: message.content,
           });
         }
-      }else{
+      } else {
         throw new Error('Message content or function call must be provided');
       }
     }
@@ -168,12 +173,15 @@ class OpenAIChat {
       do {
         const conversation = this.buildConversation();
         result = await this.sendRequest(conversation);
-        if(this.isFinished && this.isFinished(result.choices[0].message!)) {
+        if (this.isFinished && this.isFinished(result.choices[0].message!)) {
           this._notFinished = false;
         }
         await this.addSelfMessage(result.choices[0].message!);
-        
-      } while ((result.choices[0].message?.role !== 'assistant' || !result.choices[0].message?.content) && this._notFinished);
+      } while (
+        (result.choices[0].message?.role !== 'assistant' ||
+          !result.choices[0].message?.content) &&
+        this._notFinished
+      );
       handler({
         content: result.choices[0].message?.content,
         role: 'assistant',
@@ -217,8 +225,10 @@ class OpenAIChat {
   private async sendRequest(
     conversation: ChatCompletionRequestMessage[],
   ): Promise<CreateChatCompletionResponse> {
-    const functionDefinitions = this.functions.map((f) => f.toChatCompletionFunction());
-    
+    const functionDefinitions = this.functions.map((f) =>
+      f.toChatCompletionFunction(),
+    );
+
     const basicData = {
       model: this.model,
       messages: conversation,
@@ -228,12 +238,19 @@ class OpenAIChat {
       presence_penalty: this.presencePenalty,
       frequency_penalty: this.frequencyPenalty,
       stream: false,
-    }
-    const resp = await this.openai.createChatCompletion( functionDefinitions.length>0? { ...basicData, ...{functions: functionDefinitions, function_call: "auto"}} : basicData);
+    };
+    const resp = await this.openai.createChatCompletion(
+      functionDefinitions.length > 0
+        ? {
+            ...basicData,
+            ...{ functions: functionDefinitions, function_call: 'auto' },
+          }
+        : basicData,
+    );
     this.usageTracker.track(resp.data.usage!);
-    if(this._debug){
-      console.log("Request", JSON.stringify(conversation));
-      console.log("Response", JSON.stringify(resp.data));
+    if (this._debug) {
+      console.log('Request', JSON.stringify(conversation));
+      console.log('Response', JSON.stringify(resp.data));
     }
     return resp.data;
   }
