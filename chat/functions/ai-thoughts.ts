@@ -1,4 +1,4 @@
-//function called ai-thoughts with description "allows ai agent to explait to the user each step of hsi thought process"
+//function called ai-thoughts with description "allows ai agent to explait to the user each step of his thought process"
 // partial desciption of the function provided by tests in GPTPlayground/chat/functions/ai-thoughts.spec.ts
 // similar to weatherFunctionInstance in GPTPlayground/functions/get-weather.ts
 
