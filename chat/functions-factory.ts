@@ -3,6 +3,7 @@ import { AIThoughtsFunction } from './functions/ai-thoughts';
 import { weatherFunctionInstanceMock } from './functions/get-wether';
 import { questionStopFunctionInstance } from './functions/question-stop-function';
 import { writeFileFunctionInstance } from './functions/files/write-file';
+import { RunShellFunction } from './functions/run-shell';
 
 class FunctionsFactory {
   private static instance: FunctionsFactory;
@@ -10,10 +11,12 @@ class FunctionsFactory {
 
   private constructor() {
     const aiThoughtsFunction = new AIThoughtsFunction();
+    const runShellCommandFunction = new RunShellFunction();
     this.registerFunction(questionStopFunctionInstance);
     this.registerFunction(weatherFunctionInstanceMock);
     this.registerFunction(aiThoughtsFunction);
     this.registerFunction(writeFileFunctionInstance);
+    this.registerFunction(runShellCommandFunction);
   }
 
   private registerFunction(functionToRegister: IChatCompletionFunction): void {
