@@ -1,6 +1,6 @@
 import 'jest';
 import { ReadFileFunction, ReadFileResult } from './read-file';
-import { ChatCompletionFunctionExecutionResult } from '../base-function';
+import { ChatCompletionFunctionExecutionResult } from '../../base-function';
 import { promises as fsPromises } from 'fs';
 
 const readFileFunction = new ReadFileFunction();

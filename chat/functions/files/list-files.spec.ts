@@ -1,7 +1,7 @@
 // list-files.spec.ts
 import 'jest';
 import { ListFilesFunction, ListFilesResult } from './list-files';
-import { ChatCompletionFunctionExecutionResult } from '../base-function';
+import { ChatCompletionFunctionExecutionResult } from '../../base-function';
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
 
@@ -16,7 +16,9 @@ describe('ListFilesFunction', () => {
 
   afterAll(async () => {
     // Clean up test files after all tests are done
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     await fsPromises.unlink('./test1.txt').catch(() => {});
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     await fsPromises.unlink('./test2.txt').catch(() => {});
   });
 

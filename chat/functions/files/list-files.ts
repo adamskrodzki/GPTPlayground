@@ -2,7 +2,7 @@
 import {
   ChatCompletionFunctionBase,
   ChatCompletionFunctionExecutionResult,
-} from '../base-function';
+} from '../../base-function';
 import * as fs from 'fs';
 
 export interface ListFilesParameters {

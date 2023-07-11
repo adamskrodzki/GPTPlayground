@@ -2,8 +2,10 @@ import { IChatCompletionFunction } from './base-function';
 import { AIThoughtsFunction } from './functions/ai-thoughts';
 import { weatherFunctionInstanceMock } from './functions/get-wether';
 import { questionStopFunctionInstance } from './functions/question-stop-function';
-import { writeFileFunctionInstance } from './functions/files/write-file';
 import { RunShellFunction } from './functions/run-shell';
+import { ReadFileFunction } from './functions/files/read-file';
+import { SplitLongFileFunction } from './functions/files/split-long-file';
+import { SaveToFileFunction } from './functions/files/save-to-file';
 
 class FunctionsFactory {
   private static instance: FunctionsFactory;
@@ -12,10 +14,15 @@ class FunctionsFactory {
   private constructor() {
     const aiThoughtsFunction = new AIThoughtsFunction();
     const runShellCommandFunction = new RunShellFunction();
+    const readFileFunction = new ReadFileFunction();
+    const writeFileFunctionInstance = new SaveToFileFunction();
+    const splitLongFileFunction = new SplitLongFileFunction();
     this.registerFunction(questionStopFunctionInstance);
     this.registerFunction(weatherFunctionInstanceMock);
     this.registerFunction(aiThoughtsFunction);
     this.registerFunction(writeFileFunctionInstance);
+    this.registerFunction(readFileFunction);
+    this.registerFunction(splitLongFileFunction);
     this.registerFunction(runShellCommandFunction);
   }
 

@@ -1,14 +1,14 @@
 // split-long-file.spec.ts
 import 'jest';
 import { SplitLongFileFunction, SplitLongFileResult } from './split-long-file';
-import { ChatCompletionFunctionExecutionResult } from '../base-function';
+import { ChatCompletionFunctionExecutionResult } from '../../base-function';
 import { promises as fsPromises, existsSync, mkdirSync } from 'fs';
 
 const splitLongFileFunction = new SplitLongFileFunction();
 
 describe('SplitLongFileFunction', () => {
-  const testFilePath = './test.txt';
-  const testDirectoryPath = './test_directory';
+  const testFilePath = '../test.txt';
+  const testDirectoryPath = '../test_directory';
   const testFileContent = '1\n'.repeat(5000); // 5000 lines of '1'
 
   beforeAll(async () => {
@@ -30,6 +30,7 @@ describe('SplitLongFileFunction', () => {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       await fsPromises
         .unlink(`${testDirectoryPath}/chunk_${i}.txt`)
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         .catch(() => {});
     }
     // Remove test directory

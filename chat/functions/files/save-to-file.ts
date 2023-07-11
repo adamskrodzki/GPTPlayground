@@ -2,7 +2,7 @@ import { writeFile } from 'fs';
 import {
   ChatCompletionFunctionBase,
   ChatCompletionFunctionExecutionResult,
-} from '../base-function';
+} from '../../base-function';
 
 export interface SaveToFileParameters {
   content: string;

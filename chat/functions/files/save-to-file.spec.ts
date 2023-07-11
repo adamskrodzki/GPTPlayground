@@ -3,7 +3,7 @@
 
 import 'jest';
 import { SaveToFileFunction, SaveToFileResult } from './save-to-file';
-import { ChatCompletionFunctionExecutionResult } from '../base-function';
+import { ChatCompletionFunctionExecutionResult } from '../../base-function';
 import { promises as fsPromises } from 'fs';
 
 const saveToFileFunction = new SaveToFileFunction();
