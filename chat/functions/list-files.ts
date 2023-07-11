@@ -1,5 +1,8 @@
 // list-files.ts
-import { ChatCompletionFunctionBase, ChatCompletionFunctionExecutionResult } from '../base-function';
+import {
+  ChatCompletionFunctionBase,
+  ChatCompletionFunctionExecutionResult,
+} from '../base-function';
 import * as fs from 'fs';
 
 export interface ListFilesParameters {
@@ -9,7 +12,10 @@ export interface ListFilesParameters {
 
 export type ListFilesResult = string[];
 
-export class ListFilesFunction extends ChatCompletionFunctionBase<ListFilesParameters, ListFilesResult> {
+export class ListFilesFunction extends ChatCompletionFunctionBase<
+  ListFilesParameters,
+  ListFilesResult
+> {
   protected executeImplementation(
     parameters: ListFilesParameters,
   ): Promise<ChatCompletionFunctionExecutionResult<ListFilesResult>> {

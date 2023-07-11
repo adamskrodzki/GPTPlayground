@@ -1,5 +1,8 @@
 // split-long-file.ts
-import { ChatCompletionFunctionBase, ChatCompletionFunctionExecutionResult } from '../base-function';
+import {
+  ChatCompletionFunctionBase,
+  ChatCompletionFunctionExecutionResult,
+} from '../base-function';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -13,11 +16,19 @@ export interface SplitLongFileParameters {
 
 export type SplitLongFileResult = string[];
 
-export class SplitLongFileFunction extends ChatCompletionFunctionBase<SplitLongFileParameters, SplitLongFileResult> {
+export class SplitLongFileFunction extends ChatCompletionFunctionBase<
+  SplitLongFileParameters,
+  SplitLongFileResult
+> {
   protected executeImplementation(
     parameters: SplitLongFileParameters,
   ): Promise<ChatCompletionFunctionExecutionResult<SplitLongFileResult>> {
-    const { sourceFileFullPath, maxTokens = 3000, overlap = 0, firstChunkDirectory } = parameters;
+    const {
+      sourceFileFullPath,
+      maxTokens = 3000,
+      overlap = 0,
+      firstChunkDirectory,
+    } = parameters;
 
     return new Promise((resolve, reject) => {
       fs.readFile(sourceFileFullPath, 'utf8', (error, data) => {
@@ -32,7 +43,10 @@ export class SplitLongFileFunction extends ChatCompletionFunctionBase<SplitLongF
           const chunks = [];
           for (let i = 0; i < lines.length; i += maxTokens - overlap) {
             const chunk = lines.slice(i, i + maxTokens).join('\n');
-            const chunkFilePath = path.join(firstChunkDirectory, `chunk_${i / (maxTokens - overlap)}.txt`);
+            const chunkFilePath = path.join(
+              firstChunkDirectory,
+              `chunk_${i / (maxTokens - overlap)}.txt`,
+            );
             fs.writeFileSync(chunkFilePath, chunk);
             chunks.push(chunkFilePath);
           }

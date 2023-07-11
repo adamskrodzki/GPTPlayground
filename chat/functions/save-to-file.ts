@@ -1,5 +1,8 @@
 import { writeFile } from 'fs';
-import { ChatCompletionFunctionBase, ChatCompletionFunctionExecutionResult } from '../base-function';
+import {
+  ChatCompletionFunctionBase,
+  ChatCompletionFunctionExecutionResult,
+} from '../base-function';
 
 export interface SaveToFileParameters {
   content: string;
@@ -22,7 +25,7 @@ export class SaveToFileFunction extends ChatCompletionFunctionBase<
     const { content, fileName } = parameters;
     return new Promise((resolve, reject) => {
       try {
-        writeFile(fileName, content, error => {
+        writeFile(fileName, content, (error) => {
           if (error) {
             resolve({
               role: 'function',

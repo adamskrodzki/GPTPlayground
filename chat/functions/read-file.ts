@@ -1,4 +1,7 @@
-import { ChatCompletionFunctionBase, ChatCompletionFunctionExecutionResult } from '../base-function';
+import {
+  ChatCompletionFunctionBase,
+  ChatCompletionFunctionExecutionResult,
+} from '../base-function';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -14,7 +17,10 @@ export interface ReadFileResult {
   isError: boolean;
 }
 
-export class ReadFileFunction extends ChatCompletionFunctionBase<ReadFileParameters, ReadFileResult> {
+export class ReadFileFunction extends ChatCompletionFunctionBase<
+  ReadFileParameters,
+  ReadFileResult
+> {
   protected executeImplementation(
     parameters: ReadFileParameters,
   ): Promise<ChatCompletionFunctionExecutionResult<ReadFileResult>> {

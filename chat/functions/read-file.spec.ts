@@ -70,8 +70,8 @@ describe('ReadFileFunction', () => {
     );
 
     expect(
-      (result as ChatCompletionFunctionExecutionResult<ReadFileResult>)
-        .content.isError,
+      (result as ChatCompletionFunctionExecutionResult<ReadFileResult>).content
+        .isError,
     ).toBe(true);
     expect(
       (

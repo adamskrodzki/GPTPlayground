@@ -49,20 +49,32 @@ describe('ListFilesFunction', () => {
 
   test('listing files works', async () => {
     const directory = process.cwd();
-    const result = await listFilesFunction.execute(JSON.stringify({ directory }));
+    const result = await listFilesFunction.execute(
+      JSON.stringify({ directory }),
+    );
 
     expect(result.role).toBe('function');
     expect(result.name).toBe('list_files');
-    expect((result as ChatCompletionFunctionExecutionResult<ListFilesResult>).content).toContain('test1.txt');
-    expect((result as ChatCompletionFunctionExecutionResult<ListFilesResult>).content).toContain('test2.txt');
+    expect(
+      (result as ChatCompletionFunctionExecutionResult<ListFilesResult>)
+        .content,
+    ).toContain('test1.txt');
+    expect(
+      (result as ChatCompletionFunctionExecutionResult<ListFilesResult>)
+        .content,
+    ).toContain('test2.txt');
   });
 
   test('listing a non-existing directory fails', async () => {
     const directory = path.join(process.cwd(), 'non_existing_directory');
-    const result = await listFilesFunction.execute(JSON.stringify({ directory }));
+    const result = await listFilesFunction.execute(
+      JSON.stringify({ directory }),
+    );
 
     expect(
-      (result as ChatCompletionFunctionExecutionResult<ListFilesResult>).content[0].startsWith('Error:'),
+      (
+        result as ChatCompletionFunctionExecutionResult<ListFilesResult>
+      ).content[0].startsWith('Error:'),
     ).toBe(true);
   });
 });
