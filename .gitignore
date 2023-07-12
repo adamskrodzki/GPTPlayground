@@ -106,4 +106,4 @@ public
 .vscode/
 
 # project workspaces
-chat/chains/workspaces/
+workspaces/

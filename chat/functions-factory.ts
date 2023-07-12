@@ -1,5 +1,4 @@
 import { IChatCompletionFunction } from './base-function';
-import { AIThoughtsFunction } from './functions/ai-thoughts';
 import { weatherFunctionInstanceMock } from './functions/get-wether';
 import { questionStopFunctionInstance } from './functions/question-stop-function';
 import { RunShellFunction } from './functions/run-shell';
@@ -12,14 +11,12 @@ class FunctionsFactory {
   private functions: { [name: string]: IChatCompletionFunction } = {};
 
   private constructor() {
-    const aiThoughtsFunction = new AIThoughtsFunction();
     const runShellCommandFunction = new RunShellFunction();
     const readFileFunction = new ReadFileFunction();
     const writeFileFunctionInstance = new SaveToFileFunction();
     const splitLongFileFunction = new SplitLongFileFunction();
     this.registerFunction(questionStopFunctionInstance);
     this.registerFunction(weatherFunctionInstanceMock);
-    this.registerFunction(aiThoughtsFunction);
     this.registerFunction(writeFileFunctionInstance);
     this.registerFunction(readFileFunction);
     this.registerFunction(splitLongFileFunction);
