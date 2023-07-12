@@ -70,6 +70,30 @@ describe('SaveToFileFunction', () => {
     expect(fileContent).toBe('Test content');
   });
 
+  test('writing to a file in subdirectory works', async () => {
+    const result = await saveToFileFunction.execute(
+      JSON.stringify({
+        content: 'Test content',
+        fileName: './workspaces/create-jokes/result/result.txt',
+      }),
+    );
+
+    expect(result).toEqual({
+      role: 'function',
+      name: 'save_to_file',
+      content: {
+        message: 'The content was saved to file',
+        isError: false,
+      },
+    });
+
+    const fileContent = await fsPromises.readFile(
+      './workspaces/create-jokes/result/result.txt',
+      'utf-8',
+    );
+    expect(fileContent).toBe('Test content');
+  });
+
   test('writing to a non-existing directory fails', async () => {
     const result = await saveToFileFunction.execute(
       JSON.stringify({
