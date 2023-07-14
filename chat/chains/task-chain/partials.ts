@@ -109,7 +109,7 @@ async function splitTask(input: Task): Promise<Task[]> {
   ) +
     'Given these tools, please provide a step-by-step breakdown of how you would split the main task \
    into subtasks, which tool(s) you would use for each subtask, and how each subtask supports \
-   the completion of the main task. Pay attention to the fact that every subtask should be dependent only on previous tasks as they will be done in sequence ';
+   the completion of the main task. Think very carefully about order of tasks. Analyze what activities needs to be done first and which should be done later ';
   const text =
     'Please, process following task for me, by calling split-task function: \n\n Task: \n' +
     input.toString();
