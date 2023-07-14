@@ -37,7 +37,7 @@ async function toolSelectorChain(
 
     // Set temperature, max tokens, and penalties for both agents
     chat.setTemperature(0);
-    chat.setMaxTokens(200);
+    chat.setMaxTokens(2000);
     chat.setPresencePenalty(1);
     chat.setFrequencyPenalty(1);
 

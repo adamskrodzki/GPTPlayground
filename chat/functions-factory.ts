@@ -15,12 +15,12 @@ class FunctionsFactory {
     const readFileFunction = new ReadFileFunction();
     const writeFileFunctionInstance = new SaveToFileFunction();
     const splitLongFileFunction = new SplitLongFileFunction();
-    this.registerFunction(questionStopFunctionInstance);
-    this.registerFunction(weatherFunctionInstanceMock);
     this.registerFunction(writeFileFunctionInstance);
-    this.registerFunction(readFileFunction);
     this.registerFunction(splitLongFileFunction);
     this.registerFunction(runShellCommandFunction);
+    this.registerFunction(weatherFunctionInstanceMock);
+    this.registerFunction(readFileFunction);
+    this.registerFunction(questionStopFunctionInstance);
   }
 
   private registerFunction(functionToRegister: IChatCompletionFunction): void {
@@ -42,11 +42,13 @@ class FunctionsFactory {
   }
 
   public ListAvailableFunctions(): string {
-    return Object.keys(this.functions)
+    const list = Object.keys(this.functions)
       .map(
         (x) => `${this.functions[x].name} - ${this.functions[x].description}`,
       )
       .join('\r\n');
+
+    return list;
   }
 }
 

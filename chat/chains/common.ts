@@ -28,7 +28,7 @@ async function processChain(
   const chat = new OpenAIChat();
   chat.setSystemMessage(systemMessage);
   chat.setTemperature(0);
-  chat.setMaxTokens(200);
+  chat.setMaxTokens(2000);
   chat.setPresencePenalty(1);
   chat.setFrequencyPenalty(1);
   const tools = await toolSelectorChain(input, systemMessage, debug);

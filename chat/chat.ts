@@ -231,25 +231,26 @@ class OpenAIChat {
 
     const basicData = {
       model: this.model,
-      messages: conversation,
       temperature: this.temperature,
       max_tokens: this.maxTokens,
       top_p: 1,
       presence_penalty: this.presencePenalty,
       frequency_penalty: this.frequencyPenalty,
       stream: false,
+      messages: conversation,
     };
-    const resp = await this.openai.createChatCompletion(
+    const requestPayload =
       functionDefinitions.length > 0
         ? {
             ...basicData,
             ...{ functions: functionDefinitions, function_call: 'auto' },
           }
-        : basicData,
-    );
+        : basicData;
+
+    console.log('Request', JSON.stringify(requestPayload));
+    const resp = await this.openai.createChatCompletion(requestPayload);
     this.usageTracker.track(resp.data.usage!);
     if (this._debug) {
-      console.log('Request', JSON.stringify(conversation));
       console.log('Response', JSON.stringify(resp.data));
     }
     return resp.data;
